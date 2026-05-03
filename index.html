@@ -1,0 +1,821 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMIRATES | Ultra-Luxury Aviation Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <style>
+        :root { --red: #D71921; --gold: #97824B; --dark: #0f172a; --cream: #F4F2E9; }
+        /* NIGHT MODE ADDITION: Dark mode variables + toggle class */
+        body { font-family: 'Inter', sans-serif; background: #fff; overflow-x: hidden; color: var(--dark); transition: background 0.3s, color 0.3s; }
+        body.dark-mode { background: #0a0f1c; color: #e2e8f0; }
+        body.dark-mode .bg-white { background: #1e293b !important; color: #f1f5f9; }
+        body.dark-mode .border { border-color: #334155; }
+        body.dark-mode .text-gray-500, body.dark-mode .text-gray-400 { color: #94a3b8; }
+        body.dark-mode .bg-gray-50 { background: #0f172a; }
+        body.dark-mode .input-gold { background: #0f172a; border-color: #475569; color: white; }
+        body.dark-mode .section-marquee { background: #111827; color: #cbd5e1; }
+        body.dark-mode .fleet-card, body.dark-mode .class-card { background: #1e293b; }
+        body.dark-mode .class-card.selected { background: #2d1a1a; }
+        body.dark-mode .receipt-content { background: #1e293b; color: #f1f5f9; }
+        
+        .serif { font-family: 'Playfair Display', serif; }
+        
+        /* 3D TEXT EFFECT */
+        .text-3d {
+            text-shadow: 0 1px 0 #ccc, 0 2px 0 #c9c9c9, 0 3px 0 #bbb, 0 4px 0 #b9b9b9, 0 5px 0 #aaa, 0 6px 1px rgba(0,0,0,.1), 0 0 5px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.3), 0 3px 5px rgba(0,0,0,.2), 0 5px 10px rgba(0,0,0,.25);
+        }
+        body.dark-mode .text-3d { text-shadow: 0 1px 0 #334155, 0 2px 0 #1e293b; }
+
+        /* PROFESSIONAL MARQUEE SETUP */
+        .section-marquee {
+            width: 100%;
+            background: #f8fafc;
+            border-bottom: 2px solid var(--red);
+            padding: 12px 0;
+            color: #1e293b;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* 3D HERO EFFECTS */
+        .hero-container {
+            height: 100vh; perspective: 1000px; overflow: hidden;
+            background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
+        }
+        .hero-3d-plane {
+            position: absolute; width: 80%; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) translateZ(50px);
+            filter: drop-shadow(0 20px 50px rgba(0,0,0,0.5));
+            animation: planeFloat 6s ease-in-out infinite;
+        }
+        @keyframes planeFloat {
+            0%, 100% { transform: translate(-50%, -55%) rotate(1deg); }
+            50% { transform: translate(-50%, -45%) rotate(-1deg); }
+        }
+
+        /* VALIDATION STYLING */
+        .input-gold { border: 2px solid #e2e8f0; border-radius: 4px; transition: 0.3s; padding: 1rem; width: 100%; outline: none; }
+        .input-gold:focus { border-color: var(--red); box-shadow: 0 0 0 4px rgba(215, 25, 33, 0.1); }
+        .input-error { border-color: #ef4444 !important; background-color: #fef2f2; }
+
+        /* APP LAYERS */
+        .app-layer { display: none; animation: fadeIn 0.8s ease; min-height: 100vh; }
+        .app-layer.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        /* MODERN FLEET */
+        .fleet-card { overflow: hidden; transition: 0.4s; cursor: pointer; }
+        .fleet-img { transition: 0.6s; transform: scale(1); }
+        .fleet-card:hover .fleet-img { transform: scale(1.1); }
+        .fleet-card.selected { border: 3px solid var(--red); }
+
+        /* CABIN CLASS CARDS */
+        .class-card { cursor: pointer; transition: 0.4s; border: 2px solid #e2e8f0; border-radius: 8px; }
+        .class-card:hover { transform: translateY(-5px); border-color: var(--red); }
+        .class-card.selected { border-color: var(--red); background-color: #fef2f2; }
+
+        /* SEAT STYLING */
+        .seat { width: 40px; height: 45px; margin: 4px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 11px; }
+        .seat.selected { background: var(--red); color: white; border-color: var(--red); }
+        .seat.occupied { background: #f1f5f9; color: #cbd5e1; cursor: not-allowed; }
+
+        /* CANCEL FORM MODAL STYLING */
+        .modal-overlay { background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(8px); }
+
+        footer a { transition: 0.3s; }
+        footer a:hover { color: var(--red); padding-left: 4px; }
+       
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Custom Alert Popup for Restrictions */
+        .restriction-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border-left: 6px solid #D71921;
+            color: white;
+            padding: 20px 32px;
+            border-radius: 16px;
+            z-index: 10000;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 380px;
+            backdrop-filter: blur(8px);
+            animation: popIn 0.3s ease-out;
+            font-family: 'Inter', sans-serif;
+        }
+        .restriction-popup p {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .restriction-popup small {
+            display: block;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        /* ADDED: Schedule card styles */
+        .schedule-card { background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 1rem; cursor: pointer; transition: all 0.2s; }
+        .schedule-card.selected { border: 2px solid var(--red); background: #fef2f2; transform: scale(1.01); }
+        body.dark-mode .schedule-card { background: #1e293b; border-color: #334155; }
+        body.dark-mode .schedule-card.selected { background: #2d1a1a; }
+        
+        /* Receipt Modal */
+        .receipt-modal {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(12px);
+            z-index: 10001; display: flex; align-items: center; justify-content: center;
+            animation: fadeIn 0.3s;
+        }
+        .receipt-content { max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; background: white; border-radius: 24px; padding: 2rem; box-shadow: 0 25px 50px -12px black; }
+        body.dark-mode .receipt-content { background: #1e293b; color: #f1f5f9; }
+        
+        /* Theme toggle button */
+        .theme-toggle { background: #1e293b; color: white; border-radius: 40px; padding: 6px 14px; font-size: 12px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-left: 12px; }
+        body.dark-mode .theme-toggle { background: #facc15; color: #0f172a; }
+    </style>
+</head>
+<body>
+
+    <div id="cancel-modal" class="hidden fixed inset-0 z-[2000] flex items-center justify-center p-6 modal-overlay">
+        <div class="bg-white max-w-md w-full p-10 rounded-sm shadow-2xl">
+            <h3 class="serif text-3xl mb-4">Cancel Journey?</h3>
+            <p class="text-sm text-gray-500 mb-6">We are sorry to see you go. Please provide a reason for cancellation:</p>
+            
+            <form onsubmit="return false;">
+                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-2">Reason</label>
+                <select id="cancel-reason" class="input-gold mb-6 text-sm" required>
+                    <option value="">Choose a reason...</option>
+                    <option value="change">Change of Plans</option>
+                    <option value="price">Price too high</option>
+                    <option value="tech">Technical Issues</option>
+                    <option value="other">Found a better flight</option>
+                </select>
+                
+                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-2">Additional Feedback</label>
+                <textarea id="cancel-feedback" class="input-gold h-24 text-sm mb-8" placeholder="How can we improve?"></textarea>
+
+                <div class="flex space-x-4">
+                    <button onclick="closeCancelModal()" class="flex-1 py-4 text-xs font-bold uppercase border">Stay</button>
+                    <button onclick="cancelBookingAndReload()" class="flex-1 py-4 text-xs font-bold uppercase bg-red-600 text-white">Confirm Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="price-toast" class="hidden fixed bottom-10 right-10 z-[1000] bg-white shadow-2xl p-6 border-l-8 border-red-600 rounded-sm w-80 animate-bounce">
+        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pricing Updated</p>
+        <p id="toast-msg" class="text-sm font-bold">Item Added</p>
+        <p id="toast-total" class="text-2xl font-black text-red-600 mt-2">$0.00</p>
+    </div>
+
+    <nav class="fixed w-full z-[500] bg-white/80 backdrop-blur-xl border-b py-4 px-12 flex justify-between items-center">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg" class="w-20 cursor-pointer" onclick="location.reload()">
+        <div class="flex items-center space-x-8">
+            <div class="hidden lg:flex space-x-10 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <a href="javascript:void(0)" onclick="handleNavigation('home')">Home</a>
+                <a href="javascript:void(0)" onclick="handleNavigation('flybetter')">Fly Better</a>
+                <a href="javascript:void(0)" onclick="handleNavigation('about')">About Us</a>
+                <a href="javascript:void(0)" onclick="handleNavigation('booking')">Book</a>
+                <a href="javascript:void(0)" onclick="handleNavigation('fleet')">Fleet</a>
+            </div>
+            <!-- ADDED: Night Mode Toggle Button -->
+            <button id="themeToggle" class="theme-toggle">🌙 Night Mode</button>
+            <p id="nav-total" class="font-black text-red-600 text-xl tracking-tighter">$0.00</p>
+        </div>
+    </nav>
+    
+<!-- Hero Section -->
+ <main id="layer-home" class="app-layer active">
+    <style>
+        .hero-slider { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; background: #000; }
+        .hero-slide { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease-in-out; background-size: cover; background-position: center; }
+        .hero-slide.active { opacity: 0.7; }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 25%, transparent 60%);
+            z-index: 5;
+        }
+    </style>
+
+    <div class="hero-container relative flex items-center justify-center overflow-hidden h-screen w-full">
+        
+        <!-- Rotating Background Container (6 Unique Images) -->
+        <div class="hero-slider">
+            <div class="hero-slide active" style="background-image: url('assets/Hero1.png')"></div>
+            <div class="hero-slide" style="background-image: url('assets/hero2.jpg')"></div>
+            <div class="hero-slide" style="background-image: url('https://knaviation.net/wp-content/uploads/2022/01/Emirates-A380-Economy-Class-1.jpg')"></div>
+            <div class="hero-slide" style="background-image: url('https://c.ekstatic.net/ecl/aircraft-interior/premium-economy/premium-economy-w1130x468.jpg')"></div>
+            <div class="hero-slide" style="background-image: url('https://static0.simpleflyingimages.com/wordpress/wp-content/uploads/2026/01/shutterstock_2479195255.jpeg?w=1600&h=900&fit=crop')"></div>
+            <div class="hero-slide" style="background-image: url('https://wallpapercat.com/w/full/0/9/6/2226302-3000x1412-desktop-dual-monitors-airbus-a380-background-image.jpg')"></div>
+        </div>
+
+        <div class="hero-overlay"></div>
+         
+        <!-- Content Container -->
+        <div class="relative z-10 text-center px-6 flex flex-col items-center h-full pt-20">
+            <div class="flex-1 flex flex-col justify-center items-center">
+                <h1 class="serif text-white text-5xl md:text-8xl lg:text-9xl mb-4 text-3d leading-tight">
+                    Fly Better.
+                </h1>
+                <p class="text-gray-300 text-sm md:text-lg uppercase tracking-[0.5em] mb-12 max-w-4xl mx-auto leading-loose">
+                    Experience the future of global travel
+                </p>
+            </div>
+            <button onclick="startJourney()" class="mb-20 bg-[#D71921] text-white px-12 py-5 md:px-20 md:py-7 font-bold uppercase tracking-widest hover:bg-red-700 transition-all duration-300 transform hover:scale-105 shadow-2xl">
+                Start Journey
+            </button>
+        </div>
+    </div>
+</main>
+    </main>
+
+    <main id="layer-flybetter" class="app-layer pt-32 pb-20 px-0 bg-white">
+        <marquee class="section-marquee" scrollamount="5">The Emirates Experience • Award Winning Service • Fly Better Every Single Day.</marquee>
+        <div class="max-w-7xl mx-auto px-10 mt-16">
+            <h2 class="serif text-5xl mb-12 text-center text-3d">The Game Changer</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24">
+                <img src="https://c.ekstatic.net/ecl/aircraft-interior/people/emirates-first-class-m768x480.jpg" class="shadow-2xl rounded-sm">
+                <div class="space-y-6">
+                    <h3 class="serif text-3xl">Private Suites</h3>
+                    <p class="text-gray-500 leading-relaxed">Experience true luxury in our fully enclosed First Class suites. With floor-to-ceiling doors and up to 40 square feet of personal space, you can relax in total privacy.</p>
+                    <ul class="text-xs font-bold uppercase space-y-3 text-red-600">
+                        <li>• Virtual Windows for middle suites</li>
+                        <li>• Personal Climate Control</li>
+                        <li>• NASA Inspired Zero-Gravity Seating</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-gray-50 p-8 shadow-sm">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRNpNLBk8H1-gBq7vVTRHAqQ2nzs3os9s-TEg&s" class="mb-6 w-full h-48 object-cover">
+                    <h4 class="serif text-xl mb-2">Onboard Lounge</h4>
+                    <p class="text-sm text-gray-500">Take a break and mingle in our iconic A380 lounge, serving premium drinks and snacks.</p>
+                </div>
+                <div class="bg-gray-50 p-8 shadow-sm">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSWjnfJ7JAcjTNG6NFUlW-_aEJYUH52r7XzTA&s" class="mb-6 w-full h-48 object-cover">
+                    <h4 class="serif text-xl mb-2">Gourmet Dining</h4>
+                    <p class="text-sm text-gray-500">From the finest ingredients to regionally inspired menus, every meal is a celebration.</p>
+                </div>
+                <div class="bg-gray-50 p-8 shadow-sm">
+                    <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQ6jHMX8-QoHbDwF8DdSXxHeamtzQ5gLjdQQ&s" class="mb-6 w-full h-48 object-cover">
+                    <h4 class="serif text-xl mb-2">Ice Entertainment</h4>
+                    <p class="text-sm text-gray-500">Over 6,500 channels of movies, music, and games on your personal screen.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-about" class="app-layer pt-32 pb-20 px-0 bg-[#F4F2E9]">
+        <marquee class="section-marquee" scrollamount="5">Celebrating 35+ Years of Excellence • Connecting the World Through Dubai • The Emirates Story.</marquee>
+        <div class="max-w-6xl mx-auto px-10 mt-16">
+            <div class="text-center mb-20">
+                <h2 class="serif text-6xl text-3d mb-6">Our Legacy</h2>
+                <p class="text-gray-600 max-w-2xl mx-auto italic">"We don't just fly planes. We provide a gateway to the world's cultures and experiences."</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-16 mb-20">
+                <div class="space-y-8">
+                    <div>
+                        <h4 class="text-red-600 font-bold uppercase text-xs tracking-widest mb-2">The History</h4>
+                        <p class="text-sm leading-loose">From our humble beginnings in 1985 with just two leased aircraft, Emirates has grown into the world's largest international airline, serving 150+ destinations across six continents.</p>
+                    </div>
+                    <div>
+                        <h4 class="text-red-600 font-bold uppercase text-xs tracking-widest mb-2">Our Vision</h4>
+                        <p class="text-sm leading-loose">Based in Dubai, we are a key driver of global trade and tourism. Our mission is to continue setting the benchmark for luxury and safety in the skies.</p>
+                    </div>
+                </div>
+                <div class="bg-white p-12 shadow-2xl border-t-8 border-red-600">
+                    <h3 class="serif text-3xl mb-8 text-center">Global Impact</h3>
+                    <div class="space-y-6">
+                        <div class="flex justify-between border-b pb-2"><span class="text-xs font-bold uppercase">Fleet Size</span><span class="font-black text-red-600">260+</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-xs font-bold uppercase">Nationalities</span><span class="font-black text-red-600">160+</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-xs font-bold uppercase">Awards Won</span><span class="font-black text-red-600">500+</span></div>
+                        <div class="flex justify-between border-b pb-2"><span class="text-xs font-bold uppercase">Year Founded</span><span class="font-black text-red-600">1985</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-booking" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Welcome to Emirates Luxury Portal • Please provide passenger details to begin • Fly Better with the world's best airline.</marquee>
+        <div class="max-w-4xl mx-auto mt-10 px-10">
+            <div class="text-center mb-16">
+                <h2 class="serif text-6xl mb-4 text-3d">Passenger Details</h2>
+                <div class="h-1 w-20 bg-red-600 mx-auto"></div>
+            </div>
+            <div class="bg-white p-12 border shadow-2xl rounded-sm space-y-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-3">Full Legal Name</label>
+                        <input type="text" id="p-name" class="input-gold" placeholder="e.g. John Doe">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-3">Email Address</label>
+                        <input type="email" id="p-email" class="input-gold" placeholder="john@example.com">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-3">Departure City</label>
+                        <select id="origin" class="input-gold"><option>Dubai (DXB)</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase mb-3">Destination City</label>
+                        <select id="dest-select" onchange="updatePrice()" class="input-gold">
+                            <option value="0">Choose Destination...</option>
+                            <option value="1250">London (LHR) - AED1,250</option>
+                            <option value="1900">New York (JFK) - AED1,900</option>
+                            <option value="2400">Tokyo (HND) - AED2,400</option>
+                            <option value="5700">Bangkok (BKK) - AED 4,000</option>
+                            <option value="5700">Islamabad (ISB) - AED1,350</option>
+                            <option value="5700">Lahore (LHE) - AED1,350</option>
+                           <option value="5700">Faislabad (FSD) - AED1,220</option>
+                           <option value="5700">Karachi (KHI) - AED 1,299</option>
+                           <option value="5700">Sialkot(SKT) - AED 1,310</option>
+                        </select>
+                    </div>
+                </div>
+                <button onclick="validateBooking()" class="w-full bg-slate-900 text-white py-6 font-black uppercase tracking-widest hover:bg-black">Continue to Fleet Selection</button>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-fleet" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Explore the world-class Emirates Fleet • Fly the iconic A380 or the revolutionary Boeing 777 • Unmatched comfort at 40,000 feet.</marquee>
+        <div class="max-w-7xl mx-auto mt-10 px-10">
+            <h2 class="serif text-5xl mb-12 text-3d">Select Your Aircraft</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div onclick="selectFleet('Airbus A380-800', 500, this)" class="fleet-card border bg-white group cursor-pointer">
+                    <div class="overflow-hidden h-64"><img src="pexels-jimmyspixels-31027532.jpg" class="fleet-img w-full h-full object-cover"></div>
+                    <div class="p-8">
+                        <h3 class="serif text-3xl mb-2">Airbus A380</h3>
+                        <p class="text-sm text-gray-500 mb-6">The flagship experience with private suites and onboard shower spa.</p>
+                        <p class="font-bold text-red-600">+$500 Premium Surcharge</p>
+                    </div>
+                </div>
+                <div onclick="selectFleet('Boeing 777-300ER', 0, this)" class="fleet-card border bg-white group cursor-pointer">
+                    <div class="overflow-hidden h-64"><img src="emirates-18-850x850.jpg"></div>
+                    <div class="p-8">
+                        <h3 class="serif text-3xl mb-2">Boeing 777</h3>
+                        <p class="text-sm text-gray-500 mb-6">Game-changer fully enclosed First Class suites and modern interiors.</p>
+                        <p class="font-bold text-green-600">Standard Pricing</p>
+                    </div>
+                </div>
+                <div onclick="selectFleet('Airbus A350-900', 300, this)" class="fleet-card border bg-white group cursor-pointer">
+                    <div class="overflow-hidden h-64"><img src="hhip40i8v3rd1.jpeg" class="fleet-img w-full h-full object-cover"></div>
+                    <div class="p-8">
+                        <h3 class="serif text-3xl mb-2">Airbus A350</h3>
+                        <p class="text-sm text-gray-500 mb-6">The next generation of quiet, fuel-efficient long-haul luxury.</p>
+                        <p class="font-bold text-red-600">+$300 Surcharge</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-16 flex justify-between">
+                <button onclick="navigate('booking')" class="text-xs font-black uppercase border-b-2 border-black">Back to Details</button>
+                <!-- CHANGED: Next button now goes to Schedule layer -->
+                <button onclick="proceedToSchedule()" class="bg-slate-900 text-white px-12 py-5 font-black uppercase">Next: Select Flight Schedule</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ADDED: Flight Schedule Layer (Between Fleet and Class) -->
+    <main id="layer-schedule" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Choose your preferred flight schedule • Times based on fleet and destination • Punctuality guaranteed.</marquee>
+        <div class="max-w-5xl mx-auto mt-10 px-10">
+            <h2 class="serif text-5xl mb-6 text-center text-3d">Flight Schedule</h2>
+            <p class="text-center text-gray-500 mb-8" id="schedule-info"></p>
+            <div id="schedule-list" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12"></div>
+            <div class="flex justify-between">
+                <button onclick="navigate('fleet')" class="border-2 border-slate-800 px-8 py-3 font-bold uppercase text-xs">← Back to Fleet</button>
+                <button onclick="confirmSchedule()" class="bg-red-600 text-white px-12 py-3 font-black uppercase tracking-wider shadow-lg">Confirm Schedule →</button>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-class" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Choose your Cabin Class • Private Suites in First • Fully flat-beds in Business • Ergonomic seats in Economy.</marquee>
+        <div class="max-w-5xl mx-auto mt-10 px-10">
+            <h2 class="serif text-5xl mb-12 text-center text-3d">Choose Your Class</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div onclick="selectCabin('Economy', 1, this)" class="class-card bg-white p-8 text-center selected">
+            
+                    <h3 class="serif text-2xl mb-2">Economy</h3>
+                    <p class="text-xs text-gray-500 mb-4">Quality meals & comfort</p>
+                    <p class="font-bold text-gray-400 uppercase text-[10px]">Standard Multiplier x1</p>
+                </div>
+                <div onclick="selectCabin('Business', 2.5, this)" class="class-card bg-white p-8 text-center">
+                    <h3 class="serif text-2xl mb-2">Business</h3>
+                    <p class="text-xs text-gray-500 mb-4">Gourmet dining & flatbeds</p>
+                    <p class="font-bold text-red-600 uppercase text-[10px]">Fare Multiplier x2.5</p>
+                </div>
+                <div onclick="selectCabin('First', 5, this)" class="class-card bg-white p-8 text-center">
+                    <h3 class="serif text-2xl mb-2">First Class</h3>
+                    <p class="text-xs text-gray-500 mb-4">Ultimate luxury & private suites</p>
+                    <p class="font-bold text-red-600 uppercase text-[10px]">Fare Multiplier x5</p>
+                </div>
+            </div>
+            <div class="mt-16 flex justify-center">
+                <button onclick="navigate('menu')" class="bg-red-600 text-white px-20 py-5 font-black uppercase tracking-widest shadow-xl">Configure Dining</button>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-menu" class="app-layer pt-32 pb-20 px-0 bg-slate-50">
+        <marquee class="section-marquee" scrollamount="5">Gourmet Dining Experience • Over 15+ exquisite dishes per class • Halal and International Flavors Crafted by Award-Winning Chefs.</marquee>
+        <div class="max-w-7xl mx-auto mt-10 px-10">
+            <div class="flex justify-between items-end mb-12">
+                <h2 class="serif text-5xl text-3d">Dining Selection</h2>
+                <p id="menu-label" class="text-red-600 font-bold uppercase tracking-widest">Menu</p>
+            </div>
+            <div id="menu-grid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+            <div class="mt-20 flex justify-center space-x-6">
+                <button onclick="navigate('class')" class="border-2 border-slate-900 px-10 py-4 font-black uppercase text-xs">Change Class</button>
+                <button onclick="navigate('seats')" class="bg-slate-900 text-white px-16 py-4 font-black uppercase text-xs shadow-xl">Choose My Seat</button>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-seats" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Select your seat • Real-time seat availability • Window, Aisle, or Middle preference for a perfect journey.</marquee>
+        <div class="max-w-xl mx-auto mt-10 px-10">
+            <div class="text-center mb-10"><h2 class="serif text-5xl text-3d">Select Seat</h2></div>
+            <div class="bg-white p-12 border shadow-2xl rounded-t-[120px] border-t-8 border-red-600">
+                <div class="grid grid-cols-4 gap-2 mb-12" id="seat-map"></div>
+                <button onclick="navigate('confirm')" class="w-full bg-red-600 text-white py-6 font-black uppercase tracking-[0.2em] shadow-xl">Complete Reservation</button>
+            </div>
+        </div>
+    </main>
+
+    <main id="layer-confirm" class="app-layer pt-32 pb-20 px-0">
+        <marquee class="section-marquee" scrollamount="5">Finalize your booking • Travel Documents ready • Emirates flies to over 150 destinations worldwide.</marquee>
+        <div class="max-w-3xl mx-auto bg-white shadow-2xl border border-gray-100 mt-10 px-10">
+            <div class="bg-red-600 p-1 py-8 text-center"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg" class="w-20 mx-auto invert"></div>
+            <div class="p-12">
+                <div class="flex justify-between items-center border-b border-dashed pb-8 mb-8">
+                    <div><p class="text-[10px] text-gray-400 font-bold uppercase">Passenger</p><p id="t-name" class="text-2xl font-black">---</p></div>
+                    <div class="text-right"><p class="text-[10px] text-gray-400 font-bold uppercase">Seat</p><p id="t-seat" class="text-2xl font-black text-red-600">---</p></div>
+                </div>
+                <div class="grid grid-cols-2 gap-8 mb-12">
+                    <div><p class="text-[10px] text-gray-400 uppercase">Route</p><p class="font-bold">DXB → <span id="t-dest">---</span></p></div>
+                    <div><p class="text-[10px] text-gray-400 uppercase">Class</p><p id="t-class" class="font-bold text-red-600">Economy</p></div>
+                    <div><p class="text-[10px] text-gray-400 uppercase">Aircraft</p><p id="t-fleet" class="font-bold">---</p></div>
+                    <!-- ADDED: Schedule info in confirm -->
+                    <div><p class="text-[10px] text-gray-400 uppercase">Flight Schedule</p><p id="t-schedule" class="font-bold text-sm">Not selected</p></div>
+                    <div class="col-span-2"><p class="text-[10px] text-gray-400 uppercase">Dining Selections</p><p id="t-menu" class="text-xs text-gray-500 italic">None Selected</p></div>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="openCancelModal()" class="flex-1 border border-gray-300 py-4 font-bold uppercase text-xs hover:bg-gray-50">Cancel Journey</button>
+                    <button onclick="confirmAndPayWithReceipt()" class="flex-1 bg-slate-900 text-white py-4 font-bold uppercase text-xs shadow-lg">Confirm & Pay</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-slate-900 text-white pt-24 pb-12 px-12 border-t border-white/10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-20">
+            <div><img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg" class="w-24 invert mb-8"><p class="text-gray-400 text-sm leading-relaxed">Emirates is the world's leading luxury airline, connecting over 150 destinations worldwide with the most modern fleet.</p></div>
+            <div><h4 class="text-red-600 font-black uppercase text-xs tracking-widest mb-6">About Us</h4><ul class="text-gray-400 text-sm space-y-4 font-bold"><li><a href="javascript:void(0)" onclick="handleNavigation('about')">Our Legacy</a></li><li><a href="#">Careers</a></li><li><a href="#">Media Centre</a></li></ul></div>
+            <div><h4 class="text-red-600 font-black uppercase text-xs tracking-widest mb-6">Help</h4><ul class="text-gray-400 text-sm space-y-4 font-bold"><li><a href="#">Help Centre</a></li><li><a href="#">Contact Us</a></li><li><a href="#">Privacy Policy</a></li></ul></div>
+            <div><h4 class="text-red-600 font-black uppercase text-xs tracking-widest mb-6">Newsletter</h4><p class="text-xs text-gray-500 mb-4 font-bold uppercase">Subscribe for flight alerts</p><div class="flex"><input type="text" class="bg-white/10 border-0 p-3 flex-1 text-sm outline-none"><button class="bg-red-600 px-4">→</button></div></div>
+        </div>
+        <div class="text-center text-[10px] text-gray-600 border-t border-white/5 pt-12 uppercase tracking-widest font-black">© 2026 The Emirates Group. All Rights Reserved.</div>
+    </footer>
+
+    <script>
+        // ========= RESTRICTION SYSTEM =========
+        let isStarted = false;
+        let passengerDetailsFilled = false;
+        (function() {
+            let current = 0;
+            const slides = document.querySelectorAll('.hero-slide');
+            setInterval(() => {
+                slides[current].classList.remove('active');
+                current = (current + 1) % slides.length;
+                slides[current].classList.add('active');
+            }, 2000); 
+        })();
+        function showRestrictionPopup(message) {
+            let existingPopup = document.querySelector('.restriction-popup');
+            if(existingPopup) existingPopup.remove();
+            let popup = document.createElement('div');
+            popup.className = 'restriction-popup';
+            popup.innerHTML = `<p>${message}</p><small> Please click "Start Journey" first and complete passenger details ✨</small>`;
+            document.body.appendChild(popup);
+            setTimeout(() => { if(popup) popup.remove(); }, 3000);
+        }
+        
+        function handleNavigation(targetId) {
+            if(!isStarted) {
+                showRestrictionPopup("Access Denied! You must click 'START JOURNEY' first.");
+                return;
+            }
+            const restrictedSections = ['fleet', 'class', 'menu', 'seats', 'confirm', 'schedule'];
+            if(restrictedSections.includes(targetId) && !passengerDetailsFilled) {
+                showRestrictionPopup("Please fill passenger details first! Go to BOOK section.");
+                return;
+            }
+            navigate(targetId);
+        }
+        
+        function navigate(id) {
+            document.querySelectorAll('.app-layer').forEach(l => l.classList.remove('active'));
+            document.getElementById('layer-' + id).classList.add('active');
+            if(id === 'menu') generateMenu();
+            if(id === 'confirm') updateTicket();
+            window.scrollTo(0,0);
+        }
+        
+        function startJourney() {
+            if(isStarted) return;
+            isStarted = true;
+            showRestrictionPopup("Journey Started! Now please fill Passenger Details in BOOK section.");
+            navigate('booking');
+            generateSeats();
+        }
+        
+        function validateBooking() {
+            if(!isStarted) {
+                showRestrictionPopup("Start journey first before filling details!");
+                return;
+            }
+            const nameEl = document.getElementById('p-name');
+            const emailEl = document.getElementById('p-email');
+            const destEl = document.getElementById('dest-select');
+            if(!nameEl.value || !emailEl.value || destEl.value == "0") {
+                alert("Please fill all passenger fields and select destination.");
+                return;
+            }
+            state.name = nameEl.value;
+            state.email = emailEl.value;
+            passengerDetailsFilled = true;
+            navigate('fleet');
+        }
+        
+       
+        let state = {
+            basePrice: 0, fareMultiplier: 1, fleetSurcharge: 0, fleetName: '', cabinClass: 'Economy',
+            foodTotal: 0, menuItems: [], seat: '', name: '', email: '', destinationCode: '',
+            selectedSchedule: null   // ADDED: store chosen schedule
+        };
+        
+        // ========= 15+ MENU ITEMS FOR EACH CLASS =========
+        const menusByClass = {
+            "Economy": [
+                { name: "Pasta Primavera", price: 15, img: "https://images.unsplash.com/photo-1473093226795-af9932fe5856?w=400" },
+                { name: "Roasted Chicken", price: 18, img: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=400" },
+                { name: "Greek Salad", price: 12, img: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400" },
+                { name: "Beef Lasagna", price: 22, img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400" },
+                { name: "Vegetable Curry", price: 16, img: "https://images.unsplash.com/photo-1452948491233-ad8a1ed01085?w=400" },
+                { name: "Club Sandwich", price: 14, img: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400" },
+                { name: "Fruit Selection", price: 10, img: "https://images.unsplash.com/photo-1490818387583-1baba5e638af?w=400" },
+                { name: "Chocolate Mousse", price: 9, img: "https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?w=400" },
+                { name: "Hummus & Pita", price: 11, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS42rkrqvRvA3cngkQaPP9IhgKdvdYdYsK38Q&s" },
+                { name: "Cheese Omelette", price: 13, img: "https://images.unsplash.com/photo-1510629954389-c1e0da47d414?w=400" },
+                { name: "Blueberry Pancakes", price: 14, img: "https://www.recipetineats.com/tachyon/2019/01/Blueberry-Pancakes_8.jpg" },
+                { name: "Quinoa Salad", price: 15, img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400" },
+                { name: "Apple Tart", price: 8, img: "https://images.unsplash.com/photo-1519915028121-7d3463d20b13?w=400" },
+                { name: "Margherita Pizza", price: 17, img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400" },
+                { name: "Caesar Salad", price: 13, img: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?w=400" },
+                { name: "Garlic Bread", price: 6, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4hUcYTKBwefq7GHV_q4XF8xPEDQMRhBGWMQ&s" }
+            ],
+            "Business": [
+                { name: "Seared Salmon", price: 45, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQJ-r-RV4rV1m-DVCqivPJRjvb9KP436ejwbw&s" },
+                { name: "Lamb Chops", price: 55, img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+                { name: "Mezze Platter", price: 40, img: "https://images.unsplash.com/photo-1541529086526-db283c563270?w=400" },
+                { name: "Beef Tenderloin", price: 65, img:"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTWxIgxhLVn8W9_eWb_EEPoII5krqkQ4JP-oA&s" },
+                { name: "Shrimp Risotto", price: 50, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSgJNDoaADX7NgPlCioVAlMnrpoNdLKuJhbg&s" },
+                { name: "Duck Confit", price: 58, img: "https://thumbs.dreamstime.com/b/juicy-duck-confit-served-small-roasted-potatoes-glazed-savory-sauce-fresh-herb-sprig-garnishes-fine-dining-entree-417259667.jpg" },
+                { name: "Truffle Ravioli", price: 48, img: "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400" },
+                { name: "Gourmet Cheese", price: 35, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnwBfrFFtdIC8d3IcW9-IM-UKA2tdoacyCkQ&s" },
+                { name: "Tiramisu", price: 25, img: "https://thescranline.com/wp-content/uploads/2025/12/TIRAMISU-25-S-01.jpg" },
+                { name: "Lobster Bisque", price: 42, img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400" },
+                { name: "chineese noodles", price: 120, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRXAOJyCKWo5YCqj4JIpaG3pmaZh_MlycJyHg&s" },
+                { name: "Artisanal Bread", price: 15, img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400" },
+                { name: "Berry Sorbet", price: 20, img: "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=400" },
+                { name: "Wagyu Sliders", price: 38, img: "https://images.unsplash.com/photo-1550547660-d9450f859349?w=400" },
+                { name: "Creme Brulee", price: 22, img: "https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=400" },
+                { name: "Expresso Martini", price: 28, img: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400" }
+            ],
+            "First": [
+                { name: "Caviar Beluga", price: 210, img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400" },
+                { name: "Wagyu Fillet", price: 180, img: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400" },
+                { name: "Lobster Tails", price: 155, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSOSEq_dbCf4xl1nI_GGldQzdc-cLkndQF5qw&s" },
+                { name: "Sushi Omakase", price: 140, img: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400" },
+                { name: "Truffle Steak", price: 195, img: "https://images.unsplash.com/photo-1558030006-450675393462?w=400" },
+                { name: "Lava Chicken", price: 175, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQm4_a7ZN_Jx8bu8jTxcKwtbbu5JOG8e4AziA&s" },
+                { name: "Lazaniya", price: 350, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQQKrtqqWwvWMUvWcilyZxspcr4wFLhQucKbw&s" },
+                { name: "Saffron Risotto", price: 125, img: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400" },
+                { name: "Sea Bass Fillet", price: 145, img: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400" },
+                { name: "Gold Leaf Cake", price: 95, img: "https://images.unsplash.com/photo-1535141192574-5d4897c12636?w=400" },
+                { name: "Wild Mushroom", price: 85, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRv_0T_Qwr8w4-pRNF3NSbUcyX1xCxof9hKMw&s" },
+                { name: "Grilled Fish", price: 165, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQrRmoeXhA2i5swujfoFoSBZ-eK-619rJFrnw&s" },
+                { name: "Mutton Biryani", price: 420, img: "https://png.pngtree.com/thumb_back/fh260/background/20250226/pngtree-indian-delicious-mutton-biryani-image_16979687.jpg" },
+                { name: "Brownie Chocolate", price: 130, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIzmbySkOEQSrSvM9BKtzXFoMwyUtxoDA0tg&s" },
+                { name: "Chicken Steak", price: 75, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRYW7jwP-jeIPOlvzWedLms11wgkOnPlrU1zw&s" },
+                { name: "Chicken Momos", price: 110, img: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTrS0ivnCYvD5MnoAP32sqZKPKu60jYKlLqA&s" }
+            ]
+        };
+        
+        function updatePrice() { state.basePrice = parseFloat(document.getElementById('dest-select').value); const destText = document.getElementById('dest-select').options[document.getElementById('dest-select').selectedIndex]?.text || ''; state.destinationCode = destText.split(' - ')[0]; refreshTotal("Route Selected"); }
+        function selectFleet(name, surcharge, el) { state.fleetName = name; state.fleetSurcharge = surcharge; document.querySelectorAll('.fleet-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); refreshTotal(name + " Selected"); }
+        function selectCabin(name, multiplier, el) { state.cabinClass = name; state.fareMultiplier = multiplier; document.querySelectorAll('.class-card').forEach(c => c.classList.remove('selected')); el.classList.add('selected'); refreshTotal(name + " Class Selected"); generateMenu(); }
+        function generateMenu() { const grid = document.getElementById('menu-grid'); const dishes = menusByClass[state.cabinClass]; grid.innerHTML = dishes.map(d => `<div class="bg-white p-3 border hover:border-red-600 transition group cursor-pointer"><img src="${d.img}" class="h-28 w-full object-cover mb-3 rounded"><h4 class="text-[10px] font-black truncate uppercase mb-1">${d.name}</h4><p class="text-red-600 font-black">$${d.price}</p><button onclick="addFood('${d.name}', ${d.price})" class="w-full mt-3 bg-slate-900 text-white text-[9px] py-2 font-black uppercase rounded">Add</button></div>`).join(''); }
+        function addFood(name, price) { state.menuItems.push(name); state.foodTotal += price; refreshTotal(name + " Added"); }
+        function generateSeats() { const grid = document.getElementById('seat-map'); if(grid) { grid.innerHTML = ''; for(let i=1; i<=32; i++) { const occ = Math.random() > 0.8 ? 'occupied' : ''; grid.innerHTML += `<div class="seat ${occ}" onclick="setSeat(this, '${i}A')">${i}A</div>`; } } }
+        function setSeat(el, num) { if(el.classList.contains('occupied')) return; document.querySelectorAll('.seat').forEach(s => s.classList.remove('selected')); el.classList.add('selected'); state.seat = num; refreshTotal("Seat " + num); }
+        function refreshTotal(msg) { const total = (state.basePrice * state.fareMultiplier) + state.fleetSurcharge + state.foodTotal; document.getElementById('nav-total').innerText = '$' + total.toLocaleString(); const toast = document.getElementById('price-toast'); if(toast) { document.getElementById('toast-total').innerHTML = '$' + total; document.getElementById('toast-msg').innerText = msg; toast.classList.remove('hidden'); setTimeout(() => toast.classList.add('hidden'), 2000); } }
+        function updateTicket() { 
+            const destName = document.getElementById('dest-select').options[document.getElementById('dest-select').selectedIndex]?.text || ''; 
+            document.getElementById('t-name').innerText = state.name?.toUpperCase() || 'GUEST'; 
+            document.getElementById('t-dest').innerText = destName.split(' - ')[0]; 
+            document.getElementById('t-fleet').innerText = state.fleetName || "Aviation Class"; 
+            document.getElementById('t-class').innerText = state.cabinClass; 
+            document.getElementById('t-seat').innerText = state.seat || "TBD"; 
+            document.getElementById('t-menu').innerText = state.menuItems.length ? state.menuItems.join(' • ') : "None";
+            // display schedule if selected
+            if(state.selectedSchedule) document.getElementById('t-schedule').innerHTML = `${state.selectedSchedule.flight} | ${state.selectedSchedule.departure} → ${state.selectedSchedule.arrival}`;
+            else document.getElementById('t-schedule').innerHTML = "Not selected";
+        }
+        function openCancelModal() { document.getElementById('cancel-modal').classList.remove('hidden'); }
+        function closeCancelModal() { document.getElementById('cancel-modal').classList.add('hidden'); }
+        
+        // ===== ADDED: Schedule generation and confirmation (preserving all your original logic) =====
+        function proceedToSchedule() {
+            if(!state.fleetName) { alert("Please select an aircraft first."); return; }
+            if(!state.basePrice) { alert("Please select a destination first."); return; }
+            generateScheduleOptions();
+            navigate('schedule');
+        }
+        
+        function generateScheduleOptions() {
+            const destSelect = document.getElementById('dest-select');
+            const destText = destSelect.options[destSelect.selectedIndex]?.text || 'LHR';
+            const destCode = destText.split(' ')[0];
+            const fleet = state.fleetName;
+            // Create flight schedule array based on fleet and destination
+            let prefix = fleet.includes('A380') ? 'EK380' : (fleet.includes('777') ? 'EK777' : 'EK350');
+            const schedules = [
+                { flight: `${prefix}201`, departure: "08:30 AM", arrival: "12:45 PM", gate: "A12", duration: "7h 15m" },
+                { flight: `${prefix}503`, departure: "14:15 PM", arrival: "18:30 PM", gate: "B7", duration: "7h 15m" },
+                { flight: `${prefix}807`, departure: "22:00 PM", arrival: "02:15 AM+1", gate: "C3", duration: "7h 15m" }
+            ];
+            const container = document.getElementById('schedule-list');
+            const info = document.getElementById('schedule-info');
+            info.innerText = `✈️ ${state.fleetName} • ${destCode}`;
+            container.innerHTML = schedules.map((s, idx) => `
+                <div class="schedule-card" data-idx="${idx}">
+                    <div class="flex justify-between items-center">
+                        <div><p class="font-black text-lg">${s.flight}</p><p class="text-xs text-red-600">DXB → ${destCode}</p></div>
+                        <div class="text-right"><p class="font-bold">Depart ${s.departure}</p><p class="text-sm text-gray-500">Arrive ${s.arrival}</p></div>
+                    </div>
+                    <div class="flex justify-between mt-3 text-sm"><span>🕒 ${s.duration}</span><span>✈️ Gate ${s.gate}</span></div>
+                </div>
+            `).join('');
+            // attach click event to cards
+            document.querySelectorAll('.schedule-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.schedule-card').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    const idx = this.getAttribute('data-idx');
+                    state.selectedSchedule = schedules[idx];
+                });
+            });
+        }
+        
+        function confirmSchedule() {
+            if(!state.selectedSchedule) { alert("Please select a flight schedule."); return; }
+            refreshTotal(`Schedule ${state.selectedSchedule.flight} selected`);
+            navigate('class');
+        }
+        
+        // ===== ADDED: Receipt display and download on Confirm & Pay =====
+        function confirmAndPayWithReceipt() {
+            if(!state.name || !state.seat) { alert("Complete all steps first (passenger, fleet, schedule, class, dining, seat)."); return; }
+            if(!state.selectedSchedule) { alert("Please select a flight schedule."); return; }
+            const totalPrice = (state.basePrice * state.fareMultiplier) + state.fleetSurcharge + state.foodTotal;
+            const bookingData = {
+                passengerName: state.name,
+                email: state.email,
+                aircraft: state.fleetName,
+                cabinClass: state.cabinClass,
+                seatNumber: state.seat,
+                menuItems: state.menuItems,
+                flightSchedule: state.selectedSchedule,
+                destination: document.getElementById('dest-select').options[document.getElementById('dest-select').selectedIndex]?.text,
+                totalAmount: totalPrice,
+                bookingDate: new Date().toLocaleString()
+            };
+            // optional firebase save (keeping your original line)
+            if(window.database) window.database.ref('flights/bookings').push(bookingData).catch(e=>console.log);
+            displayReceipt(bookingData);
+        }
+        
+        function displayReceipt(booking) {
+            const receiptHtml = `
+                <div id="receiptModal" class="receipt-modal">
+                    <div class="receipt-content">
+                        <div class="text-center border-b pb-4 mb-4">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Emirates_logo.svg" class="w-24 mx-auto mb-2">
+                            <h2 class="serif text-2xl font-bold">FLY BETTER RECEIPT</h2>
+                            <p class="text-xs">Booking Reference: EK${Math.floor(Math.random()*1000000)}</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex justify-between"><span class="font-bold">Passenger:</span> ${booking.passengerName}</div>
+                            <div class="flex justify-between"><span class="font-bold">Flight:</span> ${booking.flightSchedule.flight} (DXB → ${booking.destination.split(' ')[0]})</div>
+                            <div class="flex justify-between"><span class="font-bold">Departure:</span> ${booking.flightSchedule.departure} | Gate ${booking.flightSchedule.gate}</div>
+                            <div class="flex justify-between"><span class="font-bold">Aircraft:</span> ${booking.aircraft}</div>
+                            <div class="flex justify-between"><span class="font-bold">Class / Seat:</span> ${booking.cabinClass} - ${booking.seatNumber}</div>
+                            <div class="flex justify-between"><span class="font-bold">Meals:</span> ${booking.menuItems.join(', ') || 'Standard meal'}</div>
+                            <div class="flex justify-between border-t pt-2 mt-2"><span class="font-bold text-xl">Total Paid:</span> <span class="text-red-600 text-xl font-black">$${booking.totalAmount}</span></div>
+                        </div>
+                        <div class="flex gap-4 mt-8">
+                            <button onclick="downloadReceipt()" class="flex-1 bg-slate-900 text-white py-3 font-bold uppercase text-xs">⬇ Download Receipt</button>
+                            <button onclick="closeReceipt()" class="flex-1 border py-3 font-bold text-xs">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', receiptHtml);
+            // store receipt data globally for download
+            window.lastReceiptData = booking;
+        }
+        
+        function downloadReceipt() {
+            if(!window.lastReceiptData) return;
+            const data = window.lastReceiptData;
+            const receiptText = `EMIRATES TICKET\nPassenger: ${data.passengerName}\nFlight: ${data.flightSchedule.flight}\nClass: ${data.cabinClass}\nSeat: ${data.seatNumber}\nTotal: $${data.totalAmount}\nThank you for flying Emirates.`;
+            const blob = new Blob([receiptText], {type: 'text/plain'});
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Emirates_Ticket_${data.passengerName}.txt`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+        
+        function closeReceipt() {
+            const modal = document.getElementById('receiptModal');
+            if(modal) modal.remove();
+        }
+        
+        function cancelBookingAndReload() { let reason = document.getElementById('cancel-reason').value; if(!reason) { alert("Select reason"); return; } location.reload(); }
+        
+        // ========= NIGHT MODE TOGGLE =========
+        function initTheme() {
+            if(localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
+            const toggleBtn = document.getElementById('themeToggle');
+            toggleBtn.innerText = document.body.classList.contains('dark-mode') ? '☀️ Day Mode' : '🌙 Night Mode';
+            toggleBtn.onclick = () => {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                localStorage.setItem('darkMode', isDark);
+                toggleBtn.innerText = isDark ? '☀️ Day Mode' : '🌙 Night Mode';
+            };
+        }
+        
+        // attach all functions needed globally (preserving original names)
+        window.startJourney = startJourney;
+        window.handleNavigation = handleNavigation;
+        window.navigate = navigate;
+        window.validateBooking = validateBooking;
+        window.selectFleet = selectFleet;
+        window.selectCabin = selectCabin;
+        window.addFood = addFood;
+        window.setSeat = setSeat;
+        window.updatePrice = updatePrice;
+        window.openCancelModal = openCancelModal;
+        window.closeCancelModal = closeCancelModal;
+        window.cancelBookingAndReload = cancelBookingAndReload;
+        window.generateMenu = generateMenu;
+        window.generateSeats = generateSeats;
+        window.proceedToSchedule = proceedToSchedule;
+        window.confirmSchedule = confirmSchedule;
+        window.confirmAndPayWithReceipt = confirmAndPayWithReceipt;
+        window.downloadReceipt = downloadReceipt;
+        window.closeReceipt = closeReceipt;
+        
+        initTheme();
+        setTimeout(() => { generateSeats(); }, 100);
+    </script>
+</body>
+</html>
